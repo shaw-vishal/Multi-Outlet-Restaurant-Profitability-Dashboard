@@ -278,15 +278,14 @@ with tab1:
         'REV_L':'Rev (₹L)', 'GM_PCT':'GM%', 'EBITDA_L':'EBITDA (₹L)', 'EBITDA_PCT':'EBITDA%', 'ORDERS':'Orders'
     })
 
-    st.dataframe(
-        disp.style
-            .background_gradient(subset=['EBITDA%'], cmap='RdYlGn', vmin=-20, vmax=30)
-            .background_gradient(subset=['GM%'], cmap='Blues', vmin=40, vmax=70)
-            .format({'Rev (₹L)': '{:.2f}', 'GM%': '{:.1f}',
-                     'EBITDA (₹L)': '{:.2f}', 'EBITDA%': '{:.1f}',
-                     'Orders': '{:,}'}),
-        use_container_width=True, height=400
-    )
+    # Format numeric columns before display
+    disp_fmt = disp.copy()
+    disp_fmt['Rev (₹L)']     = disp_fmt['Rev (₹L)'].map('{:.2f}'.format)
+    disp_fmt['GM%']           = disp_fmt['GM%'].map('{:.1f}'.format)
+    disp_fmt['EBITDA (₹L)']  = disp_fmt['EBITDA (₹L)'].map('{:.2f}'.format)
+    disp_fmt['EBITDA%']       = disp_fmt['EBITDA%'].map('{:.1f}'.format)
+    disp_fmt['Orders']        = disp_fmt['Orders'].map('{:,}'.format)
+    st.dataframe(disp_fmt, use_container_width=True, height=400)
 
 
 # ════════════════════════════════════════════════════════════
@@ -314,12 +313,10 @@ with tab2:
 
     with col_a:
         st.markdown("**Pivot Table — Avg Variance %**")
-        st.dataframe(
-            pivot_tbl.style
-                .background_gradient(cmap='YlOrRd', vmin=0, vmax=5)
-                .format('{:.2f}%'),
-            use_container_width=True
-        )
+        pivot_fmt = pivot_tbl.copy()
+        for col in pivot_fmt.columns:
+            pivot_fmt[col] = pivot_fmt[col].map('{:.2f}%'.format)
+        st.dataframe(pivot_fmt, use_container_width=True)
 
     with col_b:
         fig5 = px.bar(var_pivot, x='MONTH_LBL', y='VAR_PCT',
@@ -350,12 +347,8 @@ with tab2:
 
     with col_c:
         st.markdown("**Pivot Table — Store Count**")
-        st.dataframe(
-            count_tbl.style
-                .background_gradient(cmap='Blues', vmin=0, vmax=int(count_tbl.max().max()))
-                .format('{:.0f}'),
-            use_container_width=True
-        )
+        count_fmt = count_tbl.fillna(0).astype(int)
+        st.dataframe(count_fmt, use_container_width=True)
 
     with col_d:
         # Heatmap
@@ -381,10 +374,7 @@ with tab2:
     flagged['Avg_Var_Pct'] = flagged['Avg_Var_Pct'].round(2)
     flagged['Total_Variance'] = (flagged['Total_Variance']/1e5).round(2)
     flagged.columns = ['City','Store','Avg Var %','Months Flagged','Total Variance (₹L)']
-    st.dataframe(
-        flagged.style.background_gradient(subset=['Avg Var %'], cmap='Reds', vmin=3, vmax=5),
-        use_container_width=True, height=350
-    )
+    st.dataframe(flagged, use_container_width=True, height=350)
 
 # ── Footer ────────────────────────────────────────────────────
 st.markdown("---")
